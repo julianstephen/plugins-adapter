@@ -34,9 +34,7 @@ def mock_envoy_modules():
     sys.modules["envoy.service.ext_proc"] = MagicMock()
     sys.modules["envoy.service.ext_proc.v3"] = MagicMock()
     sys.modules["envoy.service.ext_proc.v3.external_processor_pb2"] = mock_ep
-    sys.modules["envoy.service.ext_proc.v3.external_processor_pb2_grpc"] = (
-        mock_ep_grpc
-    )
+    sys.modules["envoy.service.ext_proc.v3.external_processor_pb2_grpc"] = mock_ep_grpc
     sys.modules["envoy.config"] = MagicMock()
     sys.modules["envoy.config.core"] = MagicMock()
     sys.modules["envoy.config.core.v3"] = MagicMock()
@@ -74,9 +72,7 @@ def sample_tool_result_body():
     return {
         "jsonrpc": "2.0",
         "id": "test-123",
-        "result": {
-            "content": [{"type": "text", "text": "Tool execution result"}]
-        },
+        "result": {"content": [{"type": "text", "text": "Tool execution result"}]},
     }
 
 
@@ -108,10 +104,8 @@ def verify_payload_content(payload, expected_result, expected_text):
 
 
 @pytest.mark.asyncio
-async def test_getToolPostInvokeResponse_continue_processing(
-    mock_envoy_modules, mock_manager, sample_tool_result_body
-):
-    """Test getToolPostInvokeResponse when plugin allows processing."""
+async def test_getToolPostInvokeResponse_continue_processing(mock_envoy_modules, mock_manager, sample_tool_result_body):
+    """Test getToolPostInvokeResponse when plugin allows processing to continue."""
     # Setup mock response objects
     mock_response = MagicMock()
     mock_response.HasField.return_value = True
@@ -144,9 +138,7 @@ async def test_getToolPostInvokeResponse_continue_processing(
 
 
 @pytest.mark.asyncio
-async def test_getToolPostInvokeResponse_blocked(
-    mock_envoy_modules, mock_manager, sample_tool_result_body
-):
+async def test_getToolPostInvokeResponse_blocked(mock_envoy_modules, mock_manager, sample_tool_result_body):
     """Test getToolPostInvokeResponse when plugin blocks the response.
 
     This test verifies that when continue_processing=False, the function
@@ -185,9 +177,7 @@ async def test_getToolPostInvokeResponse_blocked(
     json.dumps = spy_dumps
     try:
         # Call the function
-        response = await src.server.getToolPostInvokeResponse(
-            sample_tool_result_body
-        )
+        response = await src.server.getToolPostInvokeResponse(sample_tool_result_body)
     finally:
         json.dumps = original_dumps
 
@@ -208,27 +198,18 @@ async def test_getToolPostInvokeResponse_blocked(
     assert error_body["error"]["code"] == -32000
     # Verify violation message is included
     assert "Sensitive content detected" in error_body["error"]["message"]
-    assert (
-        "Tool response contains forbidden content"
-        in error_body["error"]["message"]
-    )
+    assert "Tool response contains forbidden content" in error_body["error"]["message"]
 
 
 @pytest.mark.asyncio
-async def test_getToolPostInvokeResponse_modified_payload(
-    mock_envoy_modules, mock_manager, sample_tool_result_body
-):
+async def test_getToolPostInvokeResponse_modified_payload(mock_envoy_modules, mock_manager, sample_tool_result_body):
     """Test getToolPostInvokeResponse when plugin modifies the payload."""
     # Import server after mocking
     import src.server
 
     # Setup mock to return modified payload
-    modified_result = {
-        "content": [{"type": "text", "text": "Modified tool result"}]
-    }
-    modified_payload = ToolPostInvokePayload(
-        name="test_tool", result=modified_result
-    )
+    modified_result = {"content": [{"type": "text", "text": "Modified tool result"}]}
+    modified_payload = ToolPostInvokePayload(name="test_tool", result=modified_result)
     mock_result = ToolPostInvokeResult(
         continue_processing=True,
         modified_payload=modified_payload,
@@ -252,9 +233,7 @@ async def test_getToolPostInvokeResponse_modified_payload(
     json.dumps = spy_dumps
     try:
         # Call the function
-        response = await src.server.getToolPostInvokeResponse(
-            sample_tool_result_body
-        )
+        response = await src.server.getToolPostInvokeResponse(sample_tool_result_body)
     finally:
         json.dumps = original_dumps
 
@@ -265,22 +244,16 @@ async def test_getToolPostInvokeResponse_modified_payload(
     assert response is not None
 
     # Verify the body was modified with the new result
-    assert captured_body is not None, (
-        "json.dumps should have been called with the modified body"
-    )
+    assert captured_body is not None, "json.dumps should have been called with the modified body"
     assert captured_body["result"] == modified_result
-    assert (
-        captured_body["result"]["content"][0]["text"] == "Modified tool result"
-    )
+    assert captured_body["result"]["content"][0]["text"] == "Modified tool result"
     # Verify original metadata (jsonrpc, id) is preserved
     assert captured_body["jsonrpc"] == sample_tool_result_body["jsonrpc"]
     assert captured_body["id"] == sample_tool_result_body["id"]
 
 
 @pytest.mark.asyncio
-async def test_getToolPostInvokeResponse_multiple_content_items(
-    mock_envoy_modules, mock_manager
-):
+async def test_getToolPostInvokeResponse_multiple_content_items(mock_envoy_modules, mock_manager):
     """Test getToolPostInvokeResponse with multiple content items."""
     # Setup mock response
     mock_response = MagicMock()
@@ -325,9 +298,7 @@ async def test_getToolPostInvokeResponse_multiple_content_items(
 
 
 @pytest.mark.asyncio
-async def test_process_response_body_buffer_with_tool_result(
-    mock_envoy_modules, mock_manager
-):
+async def test_process_response_body_buffer_with_tool_result(mock_envoy_modules, mock_manager):
     """Test process_response_body_buffer with a tool result."""
     setup_response_mocks(mock_envoy_modules)
     import src.server
@@ -351,9 +322,7 @@ async def test_process_response_body_buffer_with_tool_result(
 
 
 @pytest.mark.asyncio
-async def test_process_response_body_buffer_with_sse_format(
-    mock_envoy_modules, mock_manager
-):
+async def test_process_response_body_buffer_with_sse_format(mock_envoy_modules, mock_manager):
     """Test process_response_body_buffer with SSE formatted content."""
     setup_response_mocks(mock_envoy_modules)
     import src.server
@@ -378,13 +347,10 @@ async def test_process_response_body_buffer_with_sse_format(
 
 
 @pytest.mark.asyncio
-async def test_process_response_body_buffer_multiple_chunks_scenario(
-    mock_envoy_modules, mock_manager
-):
+async def test_process_response_body_buffer_multiple_chunks_scenario(mock_envoy_modules, mock_manager):
     """Test buffering: content in chunks, then empty end_of_stream chunk.
 
-    Simulates: chunk1 (content) + chunk2 (content) + chunk3 (empty,
-    end_of_stream).
+    Simulates: chunk1 (content) + chunk2 (content) + chunk3 (empty, end_of_stream).
     """
     setup_response_mocks(mock_envoy_modules)
     import src.server
@@ -415,9 +381,7 @@ async def test_process_response_body_buffer_multiple_chunks_scenario(
 
 
 @pytest.mark.asyncio
-async def test_process_response_body_buffer_empty(
-    mock_envoy_modules, mock_manager
-):
+async def test_process_response_body_buffer_empty(mock_envoy_modules, mock_manager):
     """Test process_response_body_buffer with empty buffer."""
     setup_response_mocks(mock_envoy_modules)
     import src.server
@@ -426,17 +390,13 @@ async def test_process_response_body_buffer_empty(
     response = await src.server.process_response_body_buffer(bytearray())
 
     # Verify hook is NOT called for empty buffer
-    assert not mock_manager.invoke_hook.called, (
-        "Tool post-invoke hook should not be called for empty buffer"
-    )
+    assert not mock_manager.invoke_hook.called, "Tool post-invoke hook should not be called for empty buffer"
     # Verify response is returned (function doesn't crash on empty buffer)
     assert response is not None
 
 
 @pytest.mark.asyncio
-async def test_process_response_body_buffer_non_tool_result(
-    mock_envoy_modules, mock_manager
-):
+async def test_process_response_body_buffer_non_tool_result(mock_envoy_modules, mock_manager):
     """Test process_response_body_buffer with non-tool result."""
     setup_response_mocks(mock_envoy_modules)
     import src.server
@@ -452,8 +412,6 @@ async def test_process_response_body_buffer_non_tool_result(
     response = await src.server.process_response_body_buffer(buffer)
 
     # Verify hook is NOT called for error responses
-    assert not mock_manager.invoke_hook.called, (
-        "Tool post-invoke hook should not be called for error responses"
-    )
+    assert not mock_manager.invoke_hook.called, "Tool post-invoke hook should not be called for error responses"
     # Verify response is returned (function handles error responses gracefully)
     assert response is not None

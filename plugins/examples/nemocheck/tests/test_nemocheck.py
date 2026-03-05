@@ -6,6 +6,9 @@ from unittest.mock import Mock, patch
 # Third-Party
 import pytest
 
+# Local
+from plugin import NemoCheck
+
 # First-Party
 from cpex.framework import (
     GlobalContext,
@@ -15,9 +18,6 @@ from cpex.framework import (
     ToolPostInvokePayload,
     ToolPreInvokePayload,
 )
-
-# Local
-from plugin import NemoCheck
 
 
 @pytest.fixture
@@ -73,14 +73,10 @@ async def test_model_configuration(context):
     )
     with patch(
         "plugin.requests.post",
-        return_value=mock_http_response(
-            200, {"status": "success", "rails_status": {}}
-        ),
+        return_value=mock_http_response(200, {"status": "success", "rails_status": {}}),
     ) as mock_post:
         await custom_plugin.tool_pre_invoke(pre_payload, context)
-        assert (
-            mock_post.call_args[1]["json"]["model"] == "custom-model/test-model"
-        )
+        assert mock_post.call_args[1]["json"]["model"] == "custom-model/test-model"
 
     # Verify model is used in tool_post_invoke
     post_payload = ToolPostInvokePayload(
@@ -89,22 +85,16 @@ async def test_model_configuration(context):
     )
     with patch(
         "plugin.requests.post",
-        return_value=mock_http_response(
-            200, {"status": "success", "rails_status": {}}
-        ),
+        return_value=mock_http_response(200, {"status": "success", "rails_status": {}}),
     ) as mock_post:
         await custom_plugin.tool_post_invoke(post_payload, context)
-        assert (
-            mock_post.call_args[1]["json"]["model"] == "custom-model/test-model"
-        )
+        assert mock_post.call_args[1]["json"]["model"] == "custom-model/test-model"
 
 
 @pytest.mark.asyncio
 async def test_prompt_pre_fetch(plugin, context):
     """Test plugin prompt prefetch hook."""
-    payload = PromptPrehookPayload(
-        prompt_id="test_prompt", args={"arg0": "This is an argument"}
-    )
+    payload = PromptPrehookPayload(prompt_id="test_prompt", args={"arg0": "This is an argument"})
     result = await plugin.prompt_pre_fetch(payload, context)
     assert result.continue_processing
 
@@ -117,9 +107,7 @@ async def test_prompt_pre_fetch(plugin, context):
             200,
             {
                 "status": "success",
-                "rails_status": {
-                    "detect sensitive data": {"status": "success"}
-                },
+                "rails_status": {"detect sensitive data": {"status": "success"}},
             },
             True,
             False,
@@ -150,8 +138,7 @@ async def test_tool_pre_invoke_scenarios(
     expected_code,
     expected_mcp_code,
 ):
-    """Test tool_pre_invoke with various scenarios including error codes
-    and MCP error codes."""
+    """Test tool_pre_invoke with various scenarios including error codes and MCP error codes."""
     payload = ToolPreInvokePayload(
         name="test_tool",
         args={"tool_args": '{"param": "value"}'},
@@ -178,9 +165,7 @@ async def test_tool_pre_invoke_scenarios(
             200,
             {
                 "status": "success",
-                "rails_status": {
-                    "detect sensitive data": {"status": "success"}
-                },
+                "rails_status": {"detect sensitive data": {"status": "success"}},
             },
             True,
             False,
@@ -211,8 +196,7 @@ async def test_tool_post_invoke_http_scenarios(
     expected_code,
     expected_mcp_code,
 ):
-    """Test tool_post_invoke with various HTTP response scenarios
-    including error codes and MCP error codes."""
+    """Test tool_post_invoke with various HTTP response scenarios including error codes and MCP error codes."""
     payload = ToolPostInvokePayload(
         name="test_tool",
         result={"content": [{"type": "text", "text": "Test content"}]},
@@ -239,9 +223,7 @@ async def test_tool_post_invoke_http_scenarios(
         ({"output": "value"}, True),  # No content key
     ],
 )
-async def test_tool_post_invoke_passthrough_content_cases(
-    plugin, context, result_data, should_continue
-):
+async def test_tool_post_invoke_passthrough_content_cases(plugin, context, result_data, should_continue):
     """Test tool_post_invoke no/empty content cases that do not flag."""
     payload = ToolPostInvokePayload(name="test_tool", result=result_data)
     result = await plugin.tool_post_invoke(payload, context)
@@ -264,9 +246,7 @@ async def test_tool_post_invoke_concatenates_text(plugin, context):
 
     with patch(
         "plugin.requests.post",
-        return_value=mock_http_response(
-            200, {"status": "success", "rails_status": {}}
-        ),
+        return_value=mock_http_response(200, {"status": "success", "rails_status": {}}),
     ) as mock_post:
         result = await plugin.tool_post_invoke(payload, context)
 
@@ -290,9 +270,7 @@ async def test_tool_post_invoke_filters_non_text(plugin, context):
 
     with patch(
         "plugin.requests.post",
-        return_value=mock_http_response(
-            200, {"status": "success", "rails_status": {}}
-        ),
+        return_value=mock_http_response(200, {"status": "success", "rails_status": {}}),
     ) as mock_post:
         result = await plugin.tool_post_invoke(payload, context)
 
@@ -307,9 +285,7 @@ async def test_tool_post_invoke_filters_non_text(plugin, context):
     [
         (
             "tool_pre_invoke",
-            lambda: ToolPreInvokePayload(
-                name="test_tool", args={"tool_args": '{"param": "value"}'}
-            ),
+            lambda: ToolPreInvokePayload(name="test_tool", args={"tool_args": '{"param": "value"}'}),
         ),
         (
             "tool_post_invoke",
@@ -320,11 +296,8 @@ async def test_tool_post_invoke_filters_non_text(plugin, context):
         ),
     ],
 )
-async def test_connection_error_handling(
-    plugin, context, hook_name, payload_factory
-):
-    """Test both hooks fail closed on connection errors with
-    NEMO_CONNECTION_ERROR code."""
+async def test_connection_error_handling(plugin, context, hook_name, payload_factory):
+    """Test both hooks fail closed on connection errors with NEMO_CONNECTION_ERROR code."""
     payload = payload_factory()
     hook = getattr(plugin, hook_name)
 
@@ -343,9 +316,7 @@ async def test_connection_error_handling(
     [
         (
             "tool_pre_invoke",
-            lambda: ToolPreInvokePayload(
-                name="test_tool", args={"tool_args": '{"param": "value"}'}
-            ),
+            lambda: ToolPreInvokePayload(name="test_tool", args={"tool_args": '{"param": "value"}'}),
             "Tool request check failed",
         ),
         (
@@ -358,11 +329,8 @@ async def test_connection_error_handling(
         ),
     ],
 )
-async def test_violation_includes_rail_names(
-    plugin, context, hook_name, payload_factory, expected_reason_prefix
-):
-    """Test that violation descriptions include the rail names from
-    rails_status."""
+async def test_violation_includes_rail_names(plugin, context, hook_name, payload_factory, expected_reason_prefix):
+    """Test that violation descriptions include the rail names from rails_status."""
     payload = payload_factory()
     hook = getattr(plugin, hook_name)
 
