@@ -6,9 +6,6 @@ from unittest.mock import Mock, patch
 # Third-Party
 import pytest
 
-# Local
-from plugin import NemoCheck
-
 # First-Party
 from cpex.framework import (
     GlobalContext,
@@ -18,6 +15,8 @@ from cpex.framework import (
     ToolPostInvokePayload,
     ToolPreInvokePayload,
 )
+# Local
+from plugin import NemoCheck
 
 
 @pytest.fixture

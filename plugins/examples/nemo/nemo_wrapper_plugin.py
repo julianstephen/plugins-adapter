@@ -2,8 +2,6 @@ import asyncio
 import logging
 import os
 
-from nemoguardrails import LLMRails, RailsConfig
-
 from mcpgateway.plugins.framework import (
     Plugin,
     PluginConfig,
@@ -14,6 +12,7 @@ from mcpgateway.plugins.framework import (
     ToolPreInvokePayload,
     ToolPreInvokeResult,
 )
+from nemoguardrails import LLMRails, RailsConfig
 
 logger = logging.getLogger(__name__)
 
