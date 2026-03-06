@@ -16,8 +16,8 @@ COPY --from=docker.io/astral/uv:latest /uv /uvx /bin/
 WORKDIR /app
 
 # Copy Python dependencies and source
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml .
+RUN uv sync --no-dev
 RUN mkdir -p src/resources
 
 COPY src/ ./src/
@@ -27,8 +27,7 @@ COPY resources ./src/resources/
 COPY plugins ./plugins/
 
 # Install plugin-specific dependencies based on PLUGIN_DEPS argument
-# This depends on plugins having requirements.txt in the directory
-# and could be subject to error depending on how a plugin is structured.
+# Plugins must have a pyproject.toml in their directory.
 # Usage: docker build --build-arg PLUGIN_DEPS="nemo" -t plugins-adapter .
 # Or for multiple: docker build --build-arg PLUGIN_DEPS="nemo,other_plugin" -t plugins-adapter .
 RUN if [ -n "$PLUGIN_DEPS" ]; then \
@@ -40,7 +39,7 @@ RUN if [ -n "$PLUGIN_DEPS" ]; then \
                 req_file="$plugin_dir/pyproject.toml"; \
                 if [ -f "$req_file" ]; then \
                     echo "Installing dependencies from $plugin_dir"; \
-                    pip install --no-cache-dir $plugin_dir; \
+                    uv pip install --no-cache $plugin_dir; \
                 else \
                     echo "Warning: No pyproject.toml found for plugin '$plugin' at $req_file"; \
                 fi; \
@@ -54,4 +53,4 @@ RUN if [ -n "$PLUGIN_DEPS" ]; then \
 EXPOSE 50052
 
 # Run the server
-CMD ["python", "src/server.py"]
+CMD ["uv", "run", "python", "src/server.py"]

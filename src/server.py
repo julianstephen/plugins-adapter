@@ -1,28 +1,28 @@
 # Standard
 import asyncio
-import logging
-from typing import AsyncIterator
 import json
+import logging
 import os
-import grpc
+from typing import AsyncIterator
 
-# Third-Party
-from envoy.service.ext_proc.v3 import external_processor_pb2 as ep
-from envoy.service.ext_proc.v3 import external_processor_pb2_grpc as ep_grpc
-from envoy.config.core.v3 import base_pb2 as core
-from envoy.type.v3 import http_status_pb2 as http_status_pb2
+import grpc
 
 # First-Party
 from cpex.framework import (
     PluginManager,
-    ToolHookType,
     PromptHookType,
     PromptPrehookPayload,
+    ToolHookType,
     ToolPostInvokePayload,
     ToolPreInvokePayload,
 )
-
 from cpex.framework.models import GlobalContext
+
+# Third-Party
+from envoy.config.core.v3 import base_pb2 as core
+from envoy.service.ext_proc.v3 import external_processor_pb2 as ep
+from envoy.service.ext_proc.v3 import external_processor_pb2_grpc as ep_grpc
+from envoy.type.v3 import http_status_pb2 as http_status_pb2
 
 # ============================================================================
 # LOGGING CONFIGURATION
@@ -104,9 +104,7 @@ def create_mcp_immediate_error_response(body, error_message, violation=None):
 # ============================================================================
 def get_modified_response(body) -> ep.BodyResponse:
     return ep.BodyResponse(
-        response=ep.CommonResponse(
-            body_mutation=ep.BodyMutation(body=json.dumps(body).encode("utf-8"))
-        )
+        response=ep.CommonResponse(body_mutation=ep.BodyMutation(body=json.dumps(body).encode("utf-8")))
     )
 
 
@@ -128,15 +126,11 @@ async def getToolPreInvokeResponse(body):
         "tool_args": body["params"]["arguments"],
         "client_session_id": "replaceme",
     }
-    payload = ToolPreInvokePayload(
-        name=body["params"]["name"], args=payload_args
-    )
+    payload = ToolPreInvokePayload(name=body["params"]["name"], args=payload_args)
     # TODO: hard-coded ids
     global_context = GlobalContext(request_id="1", server_id="2")
     logger.debug(f"**** Invoking Tool Pre Invoke with payload: {payload} ****")
-    result, _ = await manager.invoke_hook(
-        ToolHookType.TOOL_PRE_INVOKE, payload, global_context=global_context
-    )
+    result, _ = await manager.invoke_hook(ToolHookType.TOOL_PRE_INVOKE, payload, global_context=global_context)
     logger.debug(f"**** Tool Pre Invoke Result: {result} ****")
     if not result.continue_processing:
         body_resp = create_mcp_immediate_error_response(
@@ -177,9 +171,7 @@ async def getToolPostInvokeResponse(body):
     # TODO: hard-coded ids
     logger.debug(f"**** Tool Post Invoke payload: {payload} ****")
     global_context = GlobalContext(request_id="1", server_id="2")
-    result, _ = await manager.invoke_hook(
-        ToolHookType.TOOL_POST_INVOKE, payload, global_context=global_context
-    )
+    result, _ = await manager.invoke_hook(ToolHookType.TOOL_POST_INVOKE, payload, global_context=global_context)
     logger.debug(f"**** Tool Post Invoke result {result}")
     if not result.continue_processing:
         # In STREAMED mode, we attempt to use immediate_response to terminate early
@@ -197,11 +189,7 @@ async def getToolPostInvokeResponse(body):
     if result_payload is not None:
         body["result"] = result_payload.result
         body_mutation = ep.BodyResponse(
-            response=ep.CommonResponse(
-                body_mutation=ep.BodyMutation(
-                    body=json.dumps(body).encode("utf-8")
-                )
-            )
+            response=ep.CommonResponse(body_mutation=ep.BodyMutation(body=json.dumps(body).encode("utf-8")))
         )
     else:
         body_mutation = ep.BodyResponse(response=ep.CommonResponse())
@@ -217,14 +205,10 @@ async def getPromptPreFetchResponse(body):
     Invokes plugins before a prompt is fetched, allowing for argument validation,
     modification, or blocking of the prompt request.
     """
-    prompt = PromptPrehookPayload(
-        prompt_id=body["params"]["name"], args=body["params"]["arguments"]
-    )
+    prompt = PromptPrehookPayload(prompt_id=body["params"]["name"], args=body["params"]["arguments"])
     # TODO: hard-coded ids
     global_context = GlobalContext(request_id="1", server_id="2")
-    result, _ = await manager.invoke_hook(
-        PromptHookType.PROMPT_PRE_FETCH, prompt, global_context=global_context
-    )
+    result, _ = await manager.invoke_hook(PromptHookType.PROMPT_PRE_FETCH, prompt, global_context=global_context)
     logger.info(result)
     if not result.continue_processing:
         body_resp = create_mcp_immediate_error_response(
@@ -267,17 +251,13 @@ async def process_response_body_buffer(buffer: bytearray):
     if not buffer:
         # Empty buffer at end of stream
         logger.debug("End of stream with empty buffer")
-        return ep.ProcessingResponse(
-            response_body=ep.BodyResponse(response=ep.CommonResponse())
-        )
+        return ep.ProcessingResponse(response_body=ep.BodyResponse(response=ep.CommonResponse()))
 
     try:
         text = buffer.decode("utf-8")
     except UnicodeDecodeError:
         logger.debug("Response body not UTF-8; skipping")
-        return ep.ProcessingResponse(
-            response_body=ep.BodyResponse(response=ep.CommonResponse())
-        )
+        return ep.ProcessingResponse(response_body=ep.BodyResponse(response=ep.CommonResponse()))
 
     lines = text.split("\n")
     logger.debug(f"Response body text: {lines}")
@@ -316,14 +296,10 @@ async def process_response_body_buffer(buffer: bytearray):
             logger.info("Invoking tool post-invoke hook")
             return await getToolPostInvokeResponse(data)
         else:
-            return ep.ProcessingResponse(
-                response_body=ep.BodyResponse(response=ep.CommonResponse())
-            )
+            return ep.ProcessingResponse(response_body=ep.BodyResponse(response=ep.CommonResponse()))
     else:
         logger.warning("No data parsed from response body")
-        return ep.ProcessingResponse(
-            response_body=ep.BodyResponse(response=ep.CommonResponse())
-        )
+        return ep.ProcessingResponse(response_body=ep.BodyResponse(response=ep.CommonResponse()))
 
 
 # ============================================================================
@@ -368,9 +344,7 @@ class ExtProcServicer(ep_grpc.ExternalProcessorServicer):
                                     core.HeaderValueOption(
                                         header=core.HeaderValue(
                                             key="x-ext-proc-header",
-                                            raw_value="hello-from-ext-proc".encode(
-                                                "utf-8"
-                                            ),
+                                            raw_value="hello-from-ext-proc".encode("utf-8"),
                                         ),
                                         append_action=core.HeaderValueOption.APPEND_IF_EXISTS_OR_ADD,
                                     )
@@ -392,9 +366,7 @@ class ExtProcServicer(ep_grpc.ExternalProcessorServicer):
                                     core.HeaderValueOption(
                                         header=core.HeaderValue(
                                             key="x-ext-proc-response-header",
-                                            raw_value="processed-by-ext-proc".encode(
-                                                "utf-8"
-                                            ),
+                                            raw_value="processed-by-ext-proc".encode("utf-8"),
                                         ),
                                         append_action=core.HeaderValueOption.APPEND_IF_EXISTS_OR_ADD,
                                     )
@@ -421,15 +393,11 @@ class ExtProcServicer(ep_grpc.ExternalProcessorServicer):
                         body = json.loads(text)
                         if "method" in body and body["method"] == "tools/call":
                             body_resp = await getToolPreInvokeResponse(body)
-                        elif (
-                            "method" in body and body["method"] == "prompts/get"
-                        ):
+                        elif "method" in body and body["method"] == "prompts/get":
                             body_resp = await getPromptPreFetchResponse(body)
                         else:
                             body_resp = ep.ProcessingResponse(
-                                request_body=ep.BodyResponse(
-                                    response=ep.CommonResponse()
-                                )
+                                request_body=ep.BodyResponse(response=ep.CommonResponse())
                             )
                         yield body_resp
 
@@ -449,26 +417,16 @@ class ExtProcServicer(ep_grpc.ExternalProcessorServicer):
 
                 # Check for end of stream (regardless of whether this chunk has content)
                 if getattr(request.response_body, "end_of_stream", False):
-                    logger.debug(
-                        "End of stream reached, processing complete buffered response"
-                    )
+                    logger.debug("End of stream reached, processing complete buffered response")
 
                     # Process the buffered content
-                    body_resp = await process_response_body_buffer(
-                        resp_body_buf
-                    )
+                    body_resp = await process_response_body_buffer(resp_body_buf)
                     yield body_resp
                     resp_body_buf.clear()
                 else:
                     # Intermediate chunk - acknowledge but don't process yet
-                    logger.debug(
-                        "Buffering intermediate chunk, waiting for end_of_stream"
-                    )
-                    yield ep.ProcessingResponse(
-                        response_body=ep.BodyResponse(
-                            response=ep.CommonResponse()
-                        )
-                    )
+                    logger.debug("Buffering intermediate chunk, waiting for end_of_stream")
+                    yield ep.ProcessingResponse(response_body=ep.BodyResponse(response=ep.CommonResponse()))
 
             else:
                 # Unhandled request types
@@ -513,9 +471,7 @@ if __name__ == "__main__":
         logging.getLogger("mcpgateway.config").setLevel(logging.DEBUG)
         logging.getLogger("mcpgateway.observability").setLevel(logging.DEBUG)
         logger.info("Manager main")
-        pm_config = os.environ.get(
-            "PLUGIN_MANAGER_CONFIG", "./resources/config/config.yaml"
-        )
+        pm_config = os.environ.get("PLUGIN_MANAGER_CONFIG", "./resources/config/config.yaml")
         manager = PluginManager(pm_config)
         asyncio.run(serve())
         # serve()

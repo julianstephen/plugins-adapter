@@ -7,10 +7,10 @@ from mcpgateway.plugins.framework import (
     PluginConfig,
     PluginContext,
     ToolHookType,
-    ToolPreInvokePayload,
-    ToolPreInvokeResult,
     ToolPostInvokePayload,
     ToolPostInvokeResult,
+    ToolPreInvokePayload,
+    ToolPreInvokeResult,
 )
 from nemoguardrails import LLMRails, RailsConfig
 
@@ -30,21 +30,15 @@ class NemoWrapperPlugin(Plugin):
             config: Plugin configuration
         """
         super().__init__(config)
-        logger.info(
-            f"[NemoWrapperPlugin] Initializing plugin with config: {config.config}"
-        )
+        logger.info(f"[NemoWrapperPlugin] Initializing plugin with config: {config.config}")
         # NOTE: very hardcoded
         nemo_config = RailsConfig.from_path(
-            os.path.join(
-                os.getcwd(), "plugins", "examples", "nemo", "pii_detect_config"
-            )
+            os.path.join(os.getcwd(), "plugins", "examples", "nemo", "pii_detect_config")
         )
         self._rails = LLMRails(nemo_config)
         logger.info("[NemoWrapperPlugin] Plugin initialized successfully")
 
-    async def tool_pre_invoke(
-        self, payload: ToolPreInvokePayload, context: PluginContext
-    ) -> ToolPreInvokeResult:
+    async def tool_pre_invoke(self, payload: ToolPreInvokePayload, context: PluginContext) -> ToolPreInvokeResult:
         """Plugin hook run before a tool is invoked.
 
         Args:
@@ -59,31 +53,19 @@ class NemoWrapperPlugin(Plugin):
         payload_args = payload.args
         if payload_args:
             try:
-                rails_response = await self._rails.generate_async(
-                    messages=[{"role": "user", "content": payload_args}]
-                )
+                rails_response = await self._rails.generate_async(messages=[{"role": "user", "content": payload_args}])
             except asyncio.CancelledError:  # asyncio.exceptions.CancelledError is thrown by nemo, need to catch
-                logging.exception(
-                    "An error occurred in the nemo plugin except block:"
-                )
+                logging.exception("An error occurred in the nemo plugin except block:")
             finally:
                 logger.warning("[NemoWrapperPlugin] Async rails executed")
                 logger.warning(rails_response)
         if rails_response and "PII detected" in rails_response["content"]:
-            logger.warning(
-                "[NemoWrapperPlugin] PII detected, stopping processing"
-            )
-            return ToolPreInvokeResult(
-                modified_payload=payload, continue_processing=False
-            )
+            logger.warning("[NemoWrapperPlugin] PII detected, stopping processing")
+            return ToolPreInvokeResult(modified_payload=payload, continue_processing=False)
         logger.warning("[NemoWrapperPlugin] No PII detected, continuing")
-        return ToolPreInvokeResult(
-            modified_payload=payload, continue_processing=True
-        )
+        return ToolPreInvokeResult(modified_payload=payload, continue_processing=True)
 
-    async def tool_post_invoke(
-        self, payload: ToolPostInvokePayload, context: PluginContext
-    ) -> ToolPostInvokeResult:
+    async def tool_post_invoke(self, payload: ToolPostInvokePayload, context: PluginContext) -> ToolPostInvokeResult:
         """Plugin hook run after a tool is invoked.
 
         Args:
