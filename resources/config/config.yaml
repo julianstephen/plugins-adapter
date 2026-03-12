@@ -11,7 +11,7 @@ plugins:
       # Replace with model name guardrailed by NeMo, for logging
       nemo_model: "model-org/guardrailed-model"
       # NeMo configuration ID to use for guardrails
-      nemo_config_id: "default"
+      nemo_config_id: "rails-custom-action"
 
 # Plugin directories to scan
 plugin_dirs:

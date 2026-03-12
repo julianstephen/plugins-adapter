@@ -17,8 +17,8 @@ deploy:
 	kubectl apply -f config-tools.yaml
 	kubectl apply -f server.yaml
 
-all: pull-rits-webui load deploy
-	@echo "pull build load deploy"
+all: load deploy
+	@echo "build load deploy"
 
 port-forward:
 	kubectl port-forward -n istio-system service/nemo-guardrails-service 8000:8000
