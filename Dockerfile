@@ -48,7 +48,10 @@ RUN if [ -n "$PLUGIN_DEPS" ]; then \
                     echo "Installing dependencies from $plugin_dir"; \
                     uv pip install --no-cache "$plugin_dir"; \
                 else \
-                    echo "Warning: No pyproject.toml found for plugin '$plugin' at $req_file"; \
+                    echo "ERROR: No pyproject.toml found for plugin '$plugin' at $req_file"; \
+                    echo "Available plugins:"; \
+                    find plugins/examples/ -maxdepth 1 -type d ! -name examples -exec basename {} \; | sort; \
+                    exit 1; \
                 fi; \
             fi; \
         done; \
